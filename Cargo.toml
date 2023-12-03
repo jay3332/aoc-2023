@@ -1,0 +1,20 @@
+[package]
+name = "aoc-2023"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dotenv_codegen = "0.15.0"
+getopts = "0.2.21"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+
+# IMPORTANT: put [workspace] as the last section of this file
+[workspace]
+members = [
+    "runner",
+    "day_01",
+]
