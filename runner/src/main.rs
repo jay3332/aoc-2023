@@ -1,7 +1,7 @@
 fn main() {
-    println!("=== AoC Day 01 Part 2 ===\n");
+    println!("=== AoC Day 02 Part 2 ===\n");
     let instant = std::time::Instant::now();
-    let out = day_01::part_2(include_str!("../../input/day_01.txt"));
+    let out = day_02::part_2(include_str!("../../input/day_02.txt"));
 
     match out {
         Ok(out) => println!("Output\n======\n{}\n", out),
