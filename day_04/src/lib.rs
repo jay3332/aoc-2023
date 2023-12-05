@@ -31,12 +31,12 @@ pub fn part_1(input: &'static str) -> Output<usize> {
 }
 
 pub fn part_2(input: &'static str) -> Output<usize> {
-    let mut lines = input.lines();
+    let lines = input.lines();
     let mut counts = vec![1_usize; lines.clone().count()];
 
     for (i, line) in lines.enumerate() {
         let count = counts[i];
-        counts[i + 1..i + count_winners(line) + 1]
+        counts[i + 1..=i + count_winners(line)]
             .iter_mut()
             .for_each(|c| *c += count);
     }
