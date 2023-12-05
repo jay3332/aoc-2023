@@ -64,6 +64,102 @@ pub fn part_1(input: &'static str) -> Output<usize> {
     Ok(sum)
 }
 
-pub fn part_2(input: &'static str) -> Output<!> {
-    todo!()
+fn parse_expand_right(line: &str, origin: usize) -> usize {
+    let mut cursor = origin;
+    let bytes = line.as_bytes();
+    while cursor < bytes.len() && bytes[cursor].is_ascii_digit() {
+        cursor += 1;
+    }
+    line[origin..cursor].parse().unwrap()
+}
+
+fn parse_expand_left(line: &str, origin: usize) -> usize {
+    let mut cursor = origin as isize;
+    let bytes = line.as_bytes();
+    while cursor >= 0 && bytes[cursor as usize].is_ascii_digit() {
+        cursor -= 1;
+    }
+    line[(cursor + 1) as usize..origin + 1].parse().unwrap()
+}
+
+fn parse_expand_out(line: &str, origin: usize) -> usize {
+    let (mut start, mut end) = (origin as isize, origin);
+    let bytes = line.as_bytes();
+
+    while start >= 0 && bytes[start as usize].is_ascii_digit() {
+        start -= 1;
+    }
+    while end < bytes.len() && bytes[end].is_ascii_digit() {
+        end += 1;
+    }
+    line[(start + 1) as usize..end].parse().unwrap()
+}
+
+pub fn part_2(input: &'static str) -> Output<usize> {
+    let mut lines = input.lines().peekable();
+    // SAFETY: we can assume that the input is valid, i.e. it contains at least one line.
+    let width = unsafe { lines.peek().unwrap_unchecked().len() };
+    let dummy = ".".repeat(width);
+
+    // pad top and bottom with dummy lines
+    let lines = once(&*dummy).chain(lines).chain(once(&*dummy));
+    // we will "slide a window" of 3 lines over the input; this is why we needed to pad dummy lines
+    // on top and bottom of the input as we will only ever be processing the middle line
+    let sum = lines
+        .map_windows::<_, _, 3>(|&[top, line, bottom]| {
+            let chars = line.as_bytes();
+            // this time, we're scanning for '*'
+            line.char_indices().filter(|(_, c)| *c == '*').filter_map(|(idx, _)| {
+                let mut ratios = [0, 0];
+                let mut buffer = 0;
+
+                macro_rules! check {
+                    ($check:expr => $f:ident($e:ident, $idx:expr) $(, else $not_cond:expr => $not:expr)?) => {{
+                        let mut result = false;
+                        if $check.is_ascii_digit() {
+                            ratios[buffer] = $f($e, $idx);
+                            if buffer == 2 {
+                                result = true;
+                            }
+                            buffer += 1;
+                        }
+                        $(
+                            if !$check.is_ascii_digit() && $not_cond {
+                                result = $not;
+                            }
+                        )?
+                        result
+                    }};
+                }
+
+                if idx > 0 && idx + 1 < width && (
+                    check!(chars[idx - 1] => parse_expand_left(line, idx - 1))
+                        || check!(chars[idx + 1] => parse_expand_right(line, idx + 1))
+                ) {
+                    return None;
+                }
+
+                let mut check_ext = |subject: &str| {
+                    let bytes = subject.as_bytes();
+                    check!(
+                        bytes[idx] => parse_expand_out(subject, idx),
+                        else idx > 0 => check!(
+                            bytes[idx - 1] => parse_expand_left(subject, idx - 1)
+                        ) || idx + 1 < width && check!(
+                            bytes[idx + 1] => parse_expand_right(subject, idx + 1)
+                        )
+                    )
+                };
+                if check_ext(top) || check_ext(bottom) {
+                    None
+                } else {
+                    let [left, right] = ratios;
+                    Some(left * right)
+                }
+            })
+            .sum::<usize>()
+        })
+        .sum();
+
+    Ok(sum)
 }
